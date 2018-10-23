@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Service
+ServiceTypes=Krita/PythonPlugin
+X-KDE-Library=animationimporter
+X-Python-2-Compatible=false
+X-Krita-Manual=Manual.html
+Name=Import Video to Animation
+Comment=Import a video file as an image sequence
