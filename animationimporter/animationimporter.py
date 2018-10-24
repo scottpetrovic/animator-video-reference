@@ -8,8 +8,9 @@ import json
 
 from PyQt5.QtCore import Qt
 from krita import (Extension, krita)
+from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QDialogButtonBox, QDialog, QMessageBox, QComboBox, QDoubleSpinBox,
-                             QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, 
+                             QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QSlider,
                              QToolButton, QAction, QPushButton, QSpinBox)
 
 
@@ -30,18 +31,51 @@ class Animationimporter(Extension):
 		
 		# print(ffprobeOutput['streams'][0]['height'])
 		self.textInfo = "Height:" + str(self.ffprobeOutput['streams'][0]['height']) + "px  Width:" + str(self.ffprobeOutput['streams'][0]['width']) + "px"
-		self.textInfo += "Duration: "  +  self.ffprobeOutput['streams'][0]['duration']  + " s"
+		self.textInfo += " Duration: "  +  self.ffprobeOutput['streams'][0]['duration']  + " s"
 		
 		self.fileLoadedDetails.setText(self.textInfo)
 
+		self.totalVideoDuration = float(self.ffprobeOutput['streams'][0]['duration']);
+		self.exportDurationSpinbox.setValue(self.totalVideoDuration)	
 
-		self.exportDurationSpinbox.setValue( float(self.ffprobeOutput['streams'][0]['duration'])  )	
+		# subtract 1 second for the qslider since the end of the video won't have a image
+		self.videoPreviewScrubber.setRange(0.0, (self.totalVideoDuration*1000-1000)) 
+
 
 		# print(self.fileName[0])
 		if self.fileName[0] == "":
 			self.startButton.setEnabled(0)
 		else:
 			self.startButton.setEnabled(1)
+			self.update_video_thumbnail()
+
+
+	def videoPreviewChanaged(self):
+		#update thumbnail for video preview				
+		self.update_video_thumbnail()
+
+	def updateVideoSliderLabel(self):
+		self.videoSliderValueLabel.setText(str(self.videoPreviewScrubber.value()/1000).join(" s"))
+
+
+
+	def update_video_thumbnail(self):
+		#run ffmpeg to export out a frame from the video
+		# ffmpeg -ss 01:23:45 -i input -vframes 1 -q:v 2 output.jpg
+		video_directory = os.path.dirname(self.fileName[0]) 
+		temp_thumbnail_location = video_directory + '/temp_thumbnail.png'
+		
+		# -vf scale="720:480"
+		subprocess.call(['ffmpeg', '-ss', str(self.videoPreviewScrubber.value()/1000) , '-i', self.fileName[0], '-s', '520x320', '-vframes', '1', temp_thumbnail_location])
+
+		#store it in a QLabel and delete the image reference on the file system
+		# self.thumbnailImageHolder 
+		self.thumbnailImageHolder.setPixmap(QPixmap(temp_thumbnail_location))
+		self.thumbnailImageHolder.show() # You were missing this.
+
+		#remove temp file
+		os.remove(temp_thumbnail_location)
+
 
 	def start_video_processing(self):
 
@@ -141,56 +175,88 @@ class Animationimporter(Extension):
 
 	def action_triggered(self):
 
-		# UI variables
+		# setup the UI objects
 		self.dialog = QDialog(app.activeWindow().qwindow())
 		self.vbox = QVBoxLayout(self.dialog)
 		self.hboxOptionsLayout = QHBoxLayout(self.dialog)
+		
 		self.filePickerButton = QToolButton()  # Until we have a proper icon
-		self.startButton = QPushButton("Start")
-		self.startButton.setEnabled(0)
+		self.filePickerButton.setIcon(app.icon("folder"))
+		self.filePickerButton.clicked.connect(self.signal_change_location) # click event
+
 		self.fileLocationLabel = QLabel("Choose a video file")
 		self.fileLoadedDetails = QLabel("Image details...") # video details go here to show to people
 
 		self.fileName = ""
 
-		self.fpsLabel = QLabel("Frames per second")
+		self.fpsLabel = QLabel("Exported frames per second")
 		self.fpsSpinbox = QSpinBox()
-		self.fpsSpinbox.setValue(24)
+		self.fpsSpinbox.setValue(24.0)
+		self.fpsSpinbox.setSuffix(" FPS")
 
-		self.frameSkipLabel = QLabel("Frame Skip Interval")
+		self.frameSkipLabel = QLabel("Frame Skip Interval (1 is all frames)")
 		self.frameSkipSpinbox = QSpinBox()
 		self.frameSkipSpinbox.setValue(1)
+		self.frameSkipSpinbox.setRange(1, 20)
 
 		self.startExportingAtXSecondsLabel = QLabel("Start Exporting at X seconds")
 		self.startExportingAtSpinbox = QDoubleSpinBox()
 		self.startExportingAtSpinbox.setValue(0.0)
+		self.startExportingAtSpinbox.setSuffix (" s")
+
+
+
+		# this will store milliseconds since QSlider has to store int values
+		self.videoPreviewScrubber = QSlider(Qt.Horizontal) 
+		self.videoPreviewScrubber.setTickInterval(1) # QSlider has to work with int
+		self.videoPreviewScrubber.sliderReleased.connect(self.videoPreviewChanaged)
+		self.videoPreviewScrubber.valueChanged.connect(self.updateVideoSliderLabel)
+		self.videoPreviewScrubber.setValue(0.0)
+
+
+
+		# add a layout for the video slider
+		self.thumbnailImageHolder = QLabel("")
+		self.videoHSliderLayout = QHBoxLayout(self.dialog)
+		self.videoSliderValueLabel = QLabel("")
+		self.videoSliderValueLabel.setText(str(self.videoPreviewScrubber.value()).join(" s"))
 
 
 		self.exportDurationLabel = QLabel("Export duration (in seconds)")
 		self.exportDurationSpinbox = QDoubleSpinBox()
 		self.exportDurationSpinbox.setValue(4.0)
+		self.exportDurationSpinbox.setSuffix (" s")
 
 		self.ffprobeOutput = ""
 
-		# add label with location and button to call file picker
+		self.startButton = QPushButton("Start")
+		self.startButton.setEnabled(0)
+		self.startButton.clicked.connect(self.start_video_processing) # click event
+
+
+
+		# arrange and add the UI elements
 		self.vbox.addWidget(self.fileLocationLabel)
-
-		self.filePickerButton.setIcon(app.icon("folder"))
-
-		self.filePickerButton.clicked.connect(self.signal_change_location) # click event
 		self.vbox.addWidget(self.filePickerButton)
 		self.vbox.addWidget(self.fileLoadedDetails)
+
+		self.vbox.addWidget(self.thumbnailImageHolder)
+
+		self.videoHSliderLayout.addWidget(self.videoPreviewScrubber)
+		self.videoHSliderLayout.addWidget(self.videoSliderValueLabel)
 		
+
+		self.vbox.addLayout(self.videoHSliderLayout)
 		self.vbox.addLayout(self.hboxOptionsLayout)
-		
+
+
 
 		# add frames per second UI
 		self.hboxOptionsLayout.addWidget(self.fpsLabel)    
-		self.fpsSpinbox.setValue(24.0)
 		self.hboxOptionsLayout.addWidget(self.fpsSpinbox)
 		
 		# add frames skip interval
-		self.frameSkipSpinbox.setValue(2)
+
 		self.hboxOptionsLayout.addWidget(self.frameSkipLabel)
 		self.hboxOptionsLayout.addWidget(self.frameSkipSpinbox)
 		
@@ -203,9 +269,8 @@ class Animationimporter(Extension):
 		self.vbox.addWidget(self.exportDurationLabel)
 		self.vbox.addWidget(self.exportDurationSpinbox)  
 		
-
-		self.startButton.clicked.connect(self.start_video_processing) # click event
 		self.vbox.addWidget(self.startButton) # add this last to kick off the process
+
 
 		self.dialog.show()
 		self.dialog.activateWindow()
