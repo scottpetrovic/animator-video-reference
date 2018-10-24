@@ -8,7 +8,7 @@ import json
 
 from PyQt5.QtCore import Qt
 from krita import (Extension, krita)
-from PyQt5.QtWidgets import (QDialogButtonBox, QDialog, QMessageBox, QComboBox, 
+from PyQt5.QtWidgets import (QDialogButtonBox, QDialog, QMessageBox, QComboBox, QDoubleSpinBox,
                              QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, 
                              QToolButton, QAction, QPushButton, QSpinBox)
 
@@ -34,7 +34,21 @@ class Animationimporter(Extension):
 		
 		self.fileLoadedDetails.setText(self.textInfo)
 
+
+		self.exportDurationSpinbox.setValue( float(self.ffprobeOutput['streams'][0]['duration'])  )	
+
+		# print(self.fileName[0])
+		if self.fileName[0] == "":
+			self.startButton.setEnabled(0)
+		else:
+			self.startButton.setEnabled(1)
+
 	def start_video_processing(self):
+
+		if self.fileName[0] == "":
+			return
+
+
 		self.startButton.setEnabled(0)
 		self.startButton.setText("Processing...please wait")
 		
@@ -103,13 +117,13 @@ class Animationimporter(Extension):
 		# prints all the metadata available:
 		import pprint
 		self.pp = pprint.PrettyPrinter(indent=2)
-		self.pp.pprint(self.ffprobeOutput)
+		# self.pp.pprint(self.ffprobeOutput)
 
 		# for example, find height and width
 		self.height = self.ffprobeOutput['streams'][0]['height']
 		self.width = self.ffprobeOutput['streams'][0]['width']
 		
-		print(self.height, self.width)
+		# print(self.height, self.width)
 		return self.height, self.width
 
 
@@ -133,6 +147,7 @@ class Animationimporter(Extension):
 		self.hboxOptionsLayout = QHBoxLayout(self.dialog)
 		self.filePickerButton = QToolButton()  # Until we have a proper icon
 		self.startButton = QPushButton("Start")
+		self.startButton.setEnabled(0)
 		self.fileLocationLabel = QLabel("Choose a video file")
 		self.fileLoadedDetails = QLabel("Image details...") # video details go here to show to people
 
@@ -147,20 +162,15 @@ class Animationimporter(Extension):
 		self.frameSkipSpinbox.setValue(1)
 
 		self.startExportingAtXSecondsLabel = QLabel("Start Exporting at X seconds")
-		self.startExportingAtSpinbox = QSpinBox()
-		self.startExportingAtSpinbox.setValue(0)
+		self.startExportingAtSpinbox = QDoubleSpinBox()
+		self.startExportingAtSpinbox.setValue(0.0)
 
 
 		self.exportDurationLabel = QLabel("Export duration (in seconds)")
-		self.exportDurationSpinbox = QSpinBox()
-		self.exportDurationSpinbox.setValue(4)
+		self.exportDurationSpinbox = QDoubleSpinBox()
+		self.exportDurationSpinbox.setValue(4.0)
 
-
-
-		# image_sequence_directory = ""
-		self.instructionsLabel = QLabel("For now, we will just take the for 3 seconds of the video. We can make this configurable later")
 		self.ffprobeOutput = ""
-
 
 		# add label with location and button to call file picker
 		self.vbox.addWidget(self.fileLocationLabel)
@@ -193,9 +203,6 @@ class Animationimporter(Extension):
 		self.vbox.addWidget(self.exportDurationLabel)
 		self.vbox.addWidget(self.exportDurationSpinbox)  
 		
-
-		self.vbox.addWidget(self.instructionsLabel)
-
 
 		self.startButton.clicked.connect(self.start_video_processing) # click event
 		self.vbox.addWidget(self.startButton) # add this last to kick off the process
