@@ -21,12 +21,6 @@ class Animationimporter(Extension):
 
 	# make sure these are defined at the top
 	def signal_change_location(self):
-
-		# call this with a button click -- not sure what the blank directory is going to do on different OSs
-		# global fileName
-		# global fileLocationLabels
-		# global fileLoadedDetails
-		# global ffprobeOutput
 		
 		self.fileName = QFileDialog.getOpenFileName(self.dialog, "Select your Video File", "", "Videos(*.mp4 *.avi *.mpg);; All files (*.*)" )
 		self.fileLocationLabel.setText(self.fileName[0]) # text is returned as two parts, file path, and type of extension that was returned
@@ -41,25 +35,9 @@ class Animationimporter(Extension):
 		self.fileLoadedDetails.setText(self.textInfo)
 
 	def start_video_processing(self):
-		pass
-		# global startButton
-		# global startExportingAtSpinbox    
-		# global exportDurationSpinbox
-		
 		self.startButton.setEnabled(0)
 		self.startButton.setText("Processing...please wait")
 		
-		# # get command line tool and navigate to the video direction
-		# # create a folder to store images
-		# print(fileName[0])
-
-
-		# global fpsSpinbox
-		# global frameSkipSpinbox
-		# global startExportingAtSpinbox
-		# global exportDurationSpinbox
-
-
 		
 		# global image_sequence_directory    
 		self.image_sequence_directory = os.path.dirname(self.fileName[0]) 
@@ -77,49 +55,36 @@ class Animationimporter(Extension):
 		# print("video file to process: " + video_file)
 		
 		# calls FFMPEG and outputs it at 24 frames per second. everything goes in the images folder
-		# #subprocess.call(['ffmpeg', '-i', video_file, "-r", str(fpsSpinbox.value()), 'output_%04d.png'])
 		subprocess.call(['ffmpeg', '-ss', str(self.startExportingAtSpinbox.value()) , '-i', self.video_file, '-t',  str(self.exportDurationSpinbox.value()), "-r", str(self.fpsSpinbox.value()), 'output_%04d.png'])
+				
 		
-		
-		# # ffmpeg -ss 30 -i input.wmv -c copy -t 10 output.wmv
-		
-		
-		# # call FFProbe to get the image dimensions of the the file
+		# call FFProbe to get the image dimensions of the the file
 		self.imageDimensions = self.findVideoMetada(self.fileName[0])
 		
-		# print(imageDimensions[0], imageDimensions[1]) # height x width
-		
-		# # create Krita document at given dimensions
-		# # Application.createDocument(1000, 1000, "Test", "RGBA", "U8", "", 120.0)
+		# create Krita document at given dimensions
+		# Application.createDocument(1000, 1000, "Test", "RGBA", "U8", "", 120.0)
 		self.newDocument = app.createDocument(self.imageDimensions[1], self.imageDimensions[0], "Test", "RGBA", "U8", "", 120.0)
 		app.activeWindow().addView(self.newDocument) # shows the document in Krita
 		
-		
-		# # call the import animation frames action to grab all the images and import them into an animation layer
-		   
-		# # get list of files in directory
+		# get list of files in directory
 		self.imageFiles = [f for f in listdir(self.image_sequence_directory) if isfile(join(self.image_sequence_directory, f))]
 		self.imageFiles.sort() # make alphabetical
-		
-		
-		# # get full path + filename of files to load
+				
+		# get full path + filename of files to load
 		self.fullPaths = []
 		for self.image in self.imageFiles:
 			self.fullPaths.append(self.image_sequence_directory + self.image)
 
-		# # step = 1
 		self.firstFrame = 0    
-		# # void importAnimation(const QList<QString> &files, int firstFrame, int stepSize);
+		# void importAnimation(const QList<QString> &files, int firstFrame, int stepSize);
 		self.newDocument.importAnimation(self.fullPaths, self.firstFrame, self.frameSkipSpinbox.value())
 		
 		    
-		# # cleanup - delete the images and remove the directory
-		# print("removing the contents")
+		# cleanup - delete the images and remove the directory
 		for image in self.fullPaths:
 			os.remove(image) 
 		
 		os.rmdir(self.image_sequence_directory)
-		# print("removed the contents")
 		
 		self.startButton.setEnabled(1)
 		self.startButton.setText("Start")
@@ -149,7 +114,7 @@ class Animationimporter(Extension):
 
 
 	def __init__(self, parent):
-		#Always initialise the superclass, This is necessary to create the underlying C++ object 
+		# Always initialise the superclass, This is necessary to create the underlying C++ object 
 		super().__init__(parent)
 
 	def setup(self):
@@ -234,7 +199,6 @@ class Animationimporter(Extension):
 
 		self.startButton.clicked.connect(self.start_video_processing) # click event
 		self.vbox.addWidget(self.startButton) # add this last to kick off the process
-
 
 		self.dialog.show()
 		self.dialog.activateWindow()
