@@ -6,7 +6,7 @@ import subprocess # for calling terminal tools like FFMPEG and FFProbea
 import shlex
 import json
 
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import (Qt, QTimer)
 from krita import (Extension, krita)
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QDialogButtonBox, QDialog, QMessageBox, QComboBox, QDoubleSpinBox,
@@ -49,12 +49,15 @@ class Animationimporter(Extension):
 			self.update_video_thumbnail()
 
 
-	def videoPreviewChanaged(self):
+	#def videoPreviewChanaged(self):
 		#update thumbnail for video preview				
-		self.update_video_thumbnail()
+		#self.update_video_thumbnail()
 
-	def updateVideoSliderLabel(self):
+	def videoScrubberValueChanged(self):
 		self.videoSliderValueLabel.setText(str(self.videoPreviewScrubber.value()/1000).join(" s"))
+
+		if self.videoSliderTimer.isActive() == 0:			
+			self.videoSliderTimer.start(300) # 0.5 second update rate
 
 
 
@@ -214,9 +217,16 @@ class Animationimporter(Extension):
 		# this will store milliseconds since QSlider has to store int values
 		self.videoPreviewScrubber = QSlider(Qt.Horizontal) 
 		self.videoPreviewScrubber.setTickInterval(1) # QSlider has to work with int
-		self.videoPreviewScrubber.sliderReleased.connect(self.videoPreviewChanaged)
-		self.videoPreviewScrubber.valueChanged.connect(self.updateVideoSliderLabel)
+		#self.videoPreviewScrubber.sliderReleased.connect(self.videoPreviewChanaged)
+		self.videoPreviewScrubber.valueChanged.connect(self.videoScrubberValueChanged)
 		self.videoPreviewScrubber.setValue(0.0)
+
+
+		#create a Timer that will help compress slider value change events
+		self.videoSliderTimer = QTimer()
+		self.videoSliderTimer.setSingleShot(1)
+		self.videoSliderTimer.timeout.connect(self.update_video_thumbnail)
+
 
 		# add a layout for the video slider
 		self.thumbnailImageHolder = QLabel("")
