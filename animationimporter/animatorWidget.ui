@@ -6,20 +6,119 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>230</width>
-    <height>137</height>
+    <width>405</width>
+    <height>362</height>
    </rect>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="1">
-    <widget class="QPushButton" name="pushButtonSave">
+  <property name="windowTitle">
+   <string>Import Video for Animation Reference</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QToolButton" name="filePickerButton">
      <property name="text">
-      <string>save</string>
+      <string>...</string>
      </property>
     </widget>
    </item>
-   <item row="0" column="0">
-    <widget class="QLineEdit" name="lineEdit"/>
+   <item>
+    <widget class="QLabel" name="fileLocationLabel">
+     <property name="text">
+      <string>Choose a video file</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="fileLoadedDetails">
+     <property name="text">
+      <string>Details</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="fpsLabel">
+     <property name="text">
+      <string>Exported FPS:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QSpinBox" name="fpsSpinbox"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="frameSkipLabel">
+     <property name="text">
+      <string>Skip Interval (1 is all frames):</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QSpinBox" name="frameSkipSpinbox"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="startExportingAtXSecondsLabel">
+     <property name="text">
+      <string>Start Exporting at: </string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDoubleSpinBox" name="startExportingAtSpinbox"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Export Duration</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QDoubleSpinBox" name="exportDurationSpinbox"/>
+   </item>
+   <item>
+    <widget class="QLabel" name="thumbnailImageHolder">
+     <property name="text">
+      <string>Image Holder</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QSlider" name="videoPreviewScrubber">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="videoSliderValueLabel">
+       <property name="text">
+        <string>0</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QPushButton" name="startButton">
+     <property name="text">
+      <string>Start Exporting</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>40</height>
+      </size>
+     </property>
+    </spacer>
    </item>
   </layout>
  </widget>
