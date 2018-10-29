@@ -32,7 +32,11 @@ class Animationimporter(Extension):
 		# print(ffprobeOutput['streams'][0]['height'])
 		self.textInfo = "Height:" + str(self.ffprobeOutput['streams'][0]['height']) + "px  Width:" + str(self.ffprobeOutput['streams'][0]['width']) + "px"
 		self.textInfo += " Duration: "  +  self.ffprobeOutput['streams'][0]['duration']  + " s"
-		
+		self.textInfo += " Total Frames: " + self.ffprobeOutput['streams'][0]['nb_frames']
+		self.textInfo += " Frame Rate: " + self.ffprobeOutput['streams'][0]['r_frame_rate']
+
+
+
 		self.fileLoadedDetails.setText(self.textInfo)
 
 		self.totalVideoDuration = float(self.ffprobeOutput['streams'][0]['duration']);
@@ -162,8 +166,9 @@ class Animationimporter(Extension):
 		# prints all the metadata available:
 		import pprint
 		self.pp = pprint.PrettyPrinter(indent=2)
-		# self.pp.pprint(self.ffprobeOutput)
+		self.pp.pprint(self.ffprobeOutput)
 
+		
 		# for example, find height and width
 		self.height = self.ffprobeOutput['streams'][0]['height']
 		self.width = self.ffprobeOutput['streams'][0]['width']
