@@ -30,20 +30,21 @@ class Animationimporter(Extension):
 		# run FFProbe to get vidoe info    
 		self.findVideoMetada(self.fileName[0])
 		
+		self.totalVideoDuration = float(self.ffprobeOutput['streams'][0]['duration']);
+		self.totalFrameCount = int( self.ffprobeOutput['streams'][0]['nb_frames'] )
+
 		# print(ffprobeOutput['streams'][0]['height'])
 		self.textInfo = "Width:" + str(self.ffprobeOutput['streams'][0]['width']) + "px" + "<br>"
 		self.textInfo += "Height:" + str(self.ffprobeOutput['streams'][0]['height']) + "px" + "<br>"
-		self.textInfo += "Duration: "  +  self.ffprobeOutput['streams'][0]['duration']  + " s" + "<br>"
-		self.textInfo += "Total Frames: " + self.ffprobeOutput['streams'][0]['nb_frames'] + "<br>"
+		self.textInfo += "Duration: "  +   str( '%.2f'%( self.totalVideoDuration) )     + " s" + "<br>"
+		self.textInfo += "Frames: " + self.ffprobeOutput['streams'][0]['nb_frames'] + "<br>"
 		self.textInfo += "Frame Rate: " + self.ffprobeOutput['streams'][0]['r_frame_rate']
 
 		self.videoFrameRate = int(self.ffprobeOutput['streams'][0]['r_frame_rate'].split("/")[0] )
 
-
 		self.dialog.fileLoadedDetails.setText(self.textInfo)
 
-		self.totalVideoDuration = float(self.ffprobeOutput['streams'][0]['duration']);
-		self.totalFrameCount = int( self.ffprobeOutput['streams'][0]['nb_frames'] )
+
 
 		# subtract 1 second for the qslider since the end of the video won't have a image
 		self.dialog.videoPreviewScrubber.setRange(0.0, self.totalFrameCount) 
@@ -76,9 +77,6 @@ class Animationimporter(Extension):
 			self.currentFrame = frameNumber
 			self.currentSeconds = float(self.currentFrame) / float(self.videoFrameRate) 
 
-
-		print("current frame changed to: ", self.currentFrame)
-
 		# update UI components if they are out of sync
 		if self.currentFrame != self.dialog.currentFrameNumberInput.value():
 			self.dialog.currentFrameNumberInput.setValue(self.currentFrame)
@@ -86,7 +84,7 @@ class Animationimporter(Extension):
 		if self.dialog.videoPreviewScrubber.value() != (self.currentFrame):
 			self.dialog.videoPreviewScrubber.setValue(self.currentFrame)
 
-		self.dialog.videoSliderValueLabel.setText(   str('%.3f'%(self.currentSeconds)).join(" s"))
+		self.dialog.videoSliderValueLabel.setText(   str('%.2f'%(self.currentSeconds)).join(" s"))
 
 
 
@@ -190,9 +188,9 @@ class Animationimporter(Extension):
 		self.ffprobeOutput = json.loads(self.ffprobeOutput)
 
 		# prints all the metadata available:
-		import pprint
-		self.pp = pprint.PrettyPrinter(indent=2)
-		self.pp.pprint(self.ffprobeOutput)
+		# import pprint
+		# self.pp = pprint.PrettyPrinter(indent=2)
+		# self.pp.pprint(self.ffprobeOutput)
 
 		
 		# for example, find height and width
@@ -237,7 +235,11 @@ class Animationimporter(Extension):
 		self.dialog.filePickerButton.setIcon(app.icon("folder"))
 		self.dialog.filePickerButton.clicked.connect(self.signal_change_location) # click event
 
+
+		self.dialog.nextFrameButton.setIcon(app.icon("arrow-right"))
 		self.dialog.nextFrameButton.clicked.connect(self.next_frame_button_clicked)
+
+		self.dialog.prevFrameButton.setIcon(app.icon("arrow-left"))
 		self.dialog.prevFrameButton.clicked.connect(self.prev_frame_button_clicked)
 
 		self.dialog.currentFrameNumberInput.valueChanged.connect(self.current_frame_input_changed)

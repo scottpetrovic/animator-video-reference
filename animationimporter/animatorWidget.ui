@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>502</width>
+    <width>476</width>
     <height>420</height>
    </rect>
   </property>
@@ -140,11 +140,22 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="maximumSize">
           <size>
-           <width>170</width>
+           <width>140</width>
            <height>16777215</height>
           </size>
+         </property>
+         <property name="font">
+          <font>
+           <kerning>true</kerning>
+          </font>
          </property>
          <property name="text">
           <string>File details...</string>
@@ -155,6 +166,9 @@
          <property name="wordWrap">
           <bool>true</bool>
          </property>
+         <property name="margin">
+          <number>3</number>
+         </property>
         </widget>
        </item>
        <item>
@@ -164,8 +178,8 @@
          </property>
          <property name="sizeHint" stdset="0">
           <size>
-           <width>20</width>
-           <height>40</height>
+           <width>10</width>
+           <height>10</height>
           </size>
          </property>
         </spacer>
@@ -189,15 +203,39 @@
         <layout class="QHBoxLayout" name="horizontalLayout_5">
          <item>
           <widget class="QPushButton" name="prevFrameButton">
+           <property name="minimumSize">
+            <size>
+             <width>30</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>30</width>
+             <height>30</height>
+            </size>
+           </property>
            <property name="text">
-            <string>Prev.</string>
+            <string/>
            </property>
           </widget>
          </item>
          <item>
           <widget class="QPushButton" name="nextFrameButton">
+           <property name="minimumSize">
+            <size>
+             <width>50</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>49</width>
+             <height>49</height>
+            </size>
+           </property>
            <property name="text">
-            <string>Nex.</string>
+            <string/>
            </property>
           </widget>
          </item>
