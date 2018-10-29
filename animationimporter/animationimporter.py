@@ -28,13 +28,14 @@ class Animationimporter(Extension):
 		self.dialog.fileLocationLabel.setText(self.fileName[0]) # text is returned as two parts, file path, and type of extension that was returned
 
 		# run FFProbe to get vidoe info    
-		self.findVideoMetada(self.fileName[0])    
+		self.findVideoMetada(self.fileName[0])
 		
 		# print(ffprobeOutput['streams'][0]['height'])
-		self.textInfo = "Height:" + str(self.ffprobeOutput['streams'][0]['height']) + "px  Width:" + str(self.ffprobeOutput['streams'][0]['width']) + "px"
-		self.textInfo += " Duration: "  +  self.ffprobeOutput['streams'][0]['duration']  + " s"
-		self.textInfo += " Total Frames: " + self.ffprobeOutput['streams'][0]['nb_frames']
-		self.textInfo += " Frame Rate: " + self.ffprobeOutput['streams'][0]['r_frame_rate']
+		self.textInfo = "Width:" + str(self.ffprobeOutput['streams'][0]['width']) + "px" + "<br>"
+		self.textInfo += "Height:" + str(self.ffprobeOutput['streams'][0]['height']) + "px" + "<br>"
+		self.textInfo += "Duration: "  +  self.ffprobeOutput['streams'][0]['duration']  + " s" + "<br>"
+		self.textInfo += "Total Frames: " + self.ffprobeOutput['streams'][0]['nb_frames'] + "<br>"
+		self.textInfo += "Frame Rate: " + self.ffprobeOutput['streams'][0]['r_frame_rate']
 
 
 		self.dialog.fileLoadedDetails.setText(self.textInfo)
