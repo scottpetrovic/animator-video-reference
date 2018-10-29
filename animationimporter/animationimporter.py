@@ -8,6 +8,7 @@ import json
 
 from PyQt5.QtCore import (Qt, QTimer)
 from krita import (Extension, krita)
+from PyQt5 import uic # convert UI files from XML with *.ui to something python can work with
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import (QDialogButtonBox, QDialog, QMessageBox, QComboBox, QDoubleSpinBox,
                              QVBoxLayout, QHBoxLayout, QFileDialog, QLabel, QSlider,
@@ -181,6 +182,7 @@ class Animationimporter(Extension):
 		# Always initialise the superclass, This is necessary to create the underlying C++ object 
 		super().__init__(parent)
 
+
 	def setup(self):
 		pass
 
@@ -193,6 +195,7 @@ class Animationimporter(Extension):
 
 		# setup the UI objects
 		self.dialog = QDialog(app.activeWindow().qwindow())
+		uic.loadUi(os.path.dirname(os.path.realpath(__file__)) + '/animatorWidget.ui', self.dialog)
 		self.dialog.setWindowTitle("Import Video for Animation Reference")
 
 		self.filePickerButton = QToolButton()  # Until we have a proper icon
