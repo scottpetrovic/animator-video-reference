@@ -37,14 +37,17 @@ class Animationimporter(Extension):
 		self.textInfo += "Total Frames: " + self.ffprobeOutput['streams'][0]['nb_frames'] + "<br>"
 		self.textInfo += "Frame Rate: " + self.ffprobeOutput['streams'][0]['r_frame_rate']
 
+		self.videoFrameRate = int(self.ffprobeOutput['streams'][0]['r_frame_rate'].split("/")[0] )
+
 
 		self.dialog.fileLoadedDetails.setText(self.textInfo)
 
 		self.totalVideoDuration = float(self.ffprobeOutput['streams'][0]['duration']);
+		self.totalFrameCount = int( self.ffprobeOutput['streams'][0]['nb_frames'] )
 
 		# subtract 1 second for the qslider since the end of the video won't have a image
-		self.dialog.videoPreviewScrubber.setRange(0.0, (self.totalVideoDuration*1000-1000)) 
-
+		self.dialog.videoPreviewScrubber.setRange(0.0, self.totalFrameCount) 
+		self.dialog.currentFrameNumberInput.setRange(0.0, self.totalFrameCount)
 
 		# print(self.fileName[0])
 		if self.fileName[0] == "":
@@ -55,24 +58,50 @@ class Animationimporter(Extension):
 
 
 	def videoScrubberValueChanged(self):
-		self.dialog.videoSliderValueLabel.setText(str(self.dialog.videoPreviewScrubber.value()/1000).join(" s"))
+
+		# frames * frame rate
+		
+		self.updateAndSyncCurrentFrame(self.dialog.videoPreviewScrubber.value())
 
 		if self.videoSliderTimer.isActive() == 0:			
 			self.videoSliderTimer.start(300) # 0.5 second update rate
 
 
 
+	# updates model and any UI element that aren't in sync
+	def updateAndSyncCurrentFrame(self, frameNumber):
+		
+		# update frame and seconds model data if they have changed
+		if self.currentFrame != frameNumber:
+			self.currentFrame = frameNumber
+			self.currentSeconds = float(self.currentFrame) / float(self.videoFrameRate) 
+
+
+		print("current frame changed to: ", self.currentFrame)
+
+		# update UI components if they are out of sync
+		if self.currentFrame != self.dialog.currentFrameNumberInput.value():
+			self.dialog.currentFrameNumberInput.setValue(self.currentFrame)
+
+		if self.dialog.videoPreviewScrubber.value() != (self.currentFrame):
+			self.dialog.videoPreviewScrubber.setValue(self.currentFrame)
+
+		self.dialog.videoSliderValueLabel.setText(   str('%.3f'%(self.currentSeconds)).join(" s"))
+
+
+
 	def update_video_thumbnail(self):
+		
 		#run ffmpeg to export out a frame from the video
 		# ffmpeg -ss 01:23:45 -i input -vframes 1 -q:v 2 output.jpg
 		video_directory = os.path.dirname(self.fileName[0]) 
 		temp_thumbnail_location = video_directory + '/temp_thumbnail.png'
 		
+		
 		# -vf scale="720:480"
-		subprocess.call(['ffmpeg', '-ss', str(self.dialog.videoPreviewScrubber.value()/1000) , '-i', self.fileName[0], '-s', '520x320', '-vframes', '1', temp_thumbnail_location])
+		subprocess.call(['ffmpeg', '-ss', str(self.currentSeconds) , '-i', self.fileName[0], '-s', '520x320', '-vframes', '1', temp_thumbnail_location])
 
 		#store it in a QLabel and delete the image reference on the file system
-		# self.thumbnailImageHolder 
 		self.dialog.thumbnailImageHolder.setPixmap(QPixmap(temp_thumbnail_location))
 		self.dialog.thumbnailImageHolder.show() # You were missing this.
 
@@ -185,7 +214,19 @@ class Animationimporter(Extension):
 	def createActions(self, window):
 		# you shouldn't have to touch this code. It should be ok where it is at
 		action = window.createAction(EXTENSION_ID, MENU_ENTRY, "tools/scripts")
-		action.triggered.connect(self.action_triggered)        
+		action.triggered.connect(self.action_triggered) 
+
+
+	def next_frame_button_clicked(self):
+		self.updateAndSyncCurrentFrame(self.currentFrame+1)
+
+
+	def prev_frame_button_clicked(self):
+		self.updateAndSyncCurrentFrame(self.currentFrame-1)
+
+
+	def	current_frame_input_changed(self):
+		self.updateAndSyncCurrentFrame(self.dialog.currentFrameNumberInput.value())
 
 	def action_triggered(self):
 
@@ -196,7 +237,28 @@ class Animationimporter(Extension):
 		self.dialog.filePickerButton.setIcon(app.icon("folder"))
 		self.dialog.filePickerButton.clicked.connect(self.signal_change_location) # click event
 
+		self.dialog.nextFrameButton.clicked.connect(self.next_frame_button_clicked)
+		self.dialog.prevFrameButton.clicked.connect(self.prev_frame_button_clicked)
+
+		self.dialog.currentFrameNumberInput.valueChanged.connect(self.current_frame_input_changed)
+
+
 		self.fileName = ""
+		self.videoFrameRate = -1 # not set
+		
+
+		#create a Timer that will help compress slider value change events
+		self.videoSliderTimer = QTimer()
+		self.videoSliderTimer.setSingleShot(1)
+		self.videoSliderTimer.timeout.connect(self.update_video_thumbnail)
+
+
+		# the is the only time you should set this variable
+		# afterwards always call updateAndSyncCurrentFrame
+		self.currentFrame = 0
+		self.currentSeconds = 0
+		self.updateAndSyncCurrentFrame(0) # initialize to frame 0
+
 
 		self.dialog.fpsSpinbox.setValue(24.0)
 		self.dialog.fpsSpinbox.setSuffix(" FPS")
@@ -212,11 +274,6 @@ class Animationimporter(Extension):
 		self.dialog.videoPreviewScrubber.valueChanged.connect(self.videoScrubberValueChanged)
 		self.dialog.videoPreviewScrubber.setValue(0.0)
 
-
-		#create a Timer that will help compress slider value change events
-		self.videoSliderTimer = QTimer()
-		self.videoSliderTimer.setSingleShot(1)
-		self.videoSliderTimer.timeout.connect(self.update_video_thumbnail)
 
 
 		# add a layout for the video slider
