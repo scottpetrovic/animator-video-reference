@@ -25,6 +25,14 @@ class Animationimporter(Extension):
 	def signal_change_location(self):
 		
 		self.fileName = QFileDialog.getOpenFileName(self.dialog, "Select your Video File", "", "Videos(*.mp4 *.avi *.mpg);; All files (*.*)" )
+
+
+		# if the person hits Cancel while picking a file, return and stop trying to load anything
+		print("file name entered was: ", self.fileName[0])
+		if self.fileName[0] == "":
+			return
+		
+
 		self.dialog.fileLocationLabel.setText(self.fileName[0]) # text is returned as two parts, file path, and type of extension that was returned
 
 		# run FFProbe to get vidoe info    
@@ -60,8 +68,6 @@ class Animationimporter(Extension):
 
 	def videoScrubberValueChanged(self):
 
-		# frames * frame rate
-		
 		self.updateAndSyncCurrentFrame(self.dialog.videoPreviewScrubber.value())
 
 		if self.videoSliderTimer.isActive() == 0:			
@@ -121,7 +127,8 @@ class Animationimporter(Extension):
 
 		self.dialog.startButton.setEnabled(0)
 		self.dialog.startButton.setText("Processing...please wait")
-		
+		self.dialog.repaint() #forces UI to refresh to see the disabled Start button
+
 		
 		# global image_sequence_directory    
 		self.image_sequence_directory = os.path.dirname(self.fileName[0]) 
