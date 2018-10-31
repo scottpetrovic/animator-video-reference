@@ -28,7 +28,6 @@ class Animationimporter(Extension):
 
 
 		# if the person hits Cancel while picking a file, return and stop trying to load anything
-		print("file name entered was: ", self.fileName[0])
 		if self.fileName[0] == "":
 			return
 		
@@ -172,6 +171,9 @@ class Animationimporter(Extension):
 		self.newDocument = app.createDocument(self.imageDimensions[1], self.imageDimensions[0], "Test", "RGBA", "U8", "", 120.0)
 		app.activeWindow().addView(self.newDocument) # shows the document in Krita
 		
+
+		self.newDocument.activeNode().setName("Canvas")
+
 		# get list of files in directory
 		self.imageFiles = [f for f in listdir(self.image_sequence_directory) if isfile(join(self.image_sequence_directory, f))]
 		self.imageFiles.sort() # make alphabetical
@@ -185,7 +187,21 @@ class Animationimporter(Extension):
 		# void importAnimation(const QList<QString> &files, int firstFrame, int stepSize);
 		self.newDocument.importAnimation(self.fullPaths, self.firstFrame, self.dialog.frameSkipSpinbox.value())
 		
-		    
+		self.newDocument.setFramesPerSecond(self.dialog.fpsSpinbox.value())
+		self.newDocument.setFullClipRangeStartTime(0)   
+		self.newDocument.setFullClipRangeEndTime(self.dialog.exportDurationSpinbox.value() * self.dialog.fpsSpinbox.value())
+		self.newDocument.activeNode().setShowInTimeline(1)
+		self.newDocument.activeNode().setLocked(1)
+		self.newDocument.activeNode().setName("Ref. Animation")
+
+		app.action("add_new_paint_layer").trigger()
+		self.newDocument.activeNode().setName("Draw Over")
+		self.newDocument.activeNode().setShowInTimeline(1)
+		
+		self.newDocument.setCurrentTime(0)
+		app.action("add_blank_frame").trigger()
+
+
 		# cleanup - delete the images and remove the directory
 		for image in self.fullPaths:
 			os.remove(image) 
