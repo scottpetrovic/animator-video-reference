@@ -254,10 +254,16 @@
       <item row="0" column="5">
        <widget class="QDoubleSpinBox" name="startExportingAtSpinbox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>0</height>
+         </size>
         </property>
        </widget>
       </item>
@@ -274,7 +280,7 @@
       <item row="0" column="0">
        <widget class="QLabel" name="fpsLabel">
         <property name="text">
-         <string>FPS</string>
+         <string>FPS:</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -284,10 +290,16 @@
       <item row="1" column="4" colspan="2">
        <widget class="QDoubleSpinBox" name="exportDurationSpinbox">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>0</height>
+         </size>
         </property>
        </widget>
       </item>
@@ -320,7 +332,7 @@
       <item row="1" column="3">
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>Duration</string>
+         <string>Duration:</string>
         </property>
         <property name="alignment">
          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

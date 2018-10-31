@@ -5,6 +5,7 @@ from os.path import isfile, join
 import subprocess # for calling terminal tools like FFMPEG and FFProbea
 import shlex
 import json
+import platform
 
 from PyQt5.QtCore import (Qt, QTimer)
 from krita import (Extension, krita)
@@ -56,6 +57,7 @@ class Animationimporter(Extension):
 		# subtract 1 second for the qslider since the end of the video won't have a image
 		self.dialog.videoPreviewScrubber.setRange(0.0, self.totalFrameCount) 
 		self.dialog.currentFrameNumberInput.setRange(0.0, self.totalFrameCount)
+		self.dialog.exportDurationSpinbox.setRange(0.0, 9999.0)
 
 		# print(self.fileName[0])
 		if self.fileName[0] == "":
@@ -100,15 +102,28 @@ class Animationimporter(Extension):
 		video_directory = os.path.dirname(self.fileName[0]) 
 		temp_thumbnail_location = video_directory + '/temp_thumbnail.png'
 		
+		ffmpegArgs = ['ffmpeg', 
+				'-hide_banner',
+				'-loglevel', 'panic',
+				'-ss', str(self.currentSeconds) , 
+				'-i', self.fileName[0], 
+				'-s', '520x320', 
+				'-vframes', '1', temp_thumbnail_location]
 		
-		# -vf scale="720:480"
-		subprocess.call(['ffmpeg', 
-			'-hide_banner',
-			'-loglevel', 'panic',
-			'-ss', str(self.currentSeconds) , 
-			'-i', self.fileName[0], 
-			'-s', '520x320', 
-			'-vframes', '1', temp_thumbnail_location])
+
+		# this fancy set up stuff helps suppress the command line from flashing on and off
+		# whenever ffmpeg is ran. There doesn't seem to be a good global way to do it
+		# so do the "BAD" way only on OSX
+		# https://stackoverflow.com/questions/1765078/how-to-avoid-console-window-with-pyw-file-containing-os-system-call/12964900#12964900
+				
+		if platform.system() == 'Windows': 
+			startupinfo = subprocess.STARTUPINFO()
+			startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+			startupinfo.wShowWindow = subprocess.SW_HIDE
+			subprocess.call( ffmpegArgs, stdin=None, stdout=None, startupinfo=startupinfo)
+		else:
+			subprocess.call(ffmpegArgs)
+
 
 		#store it in a QLabel and delete the image reference on the file system
 		self.dialog.thumbnailImageHolder.setPixmap(QPixmap(temp_thumbnail_location))
@@ -153,14 +168,16 @@ class Animationimporter(Extension):
 
 
 
-		# calls FFMPEG and outputs it at 24 frames per second. everything goes in the images folder
-		subprocess.call(['ffmpeg', 
+		ffmpegArgs = ['ffmpeg', 
 			'-hide_banner',
 			'-loglevel', 'panic',
 			'-ss', str(self.dialog.startExportingAtSpinbox.value()) , 
 			'-i', self.video_file, 
 			'-t',  str(self.dialog.exportDurationSpinbox.value()), 
-			'-r', str(self.dialog.fpsSpinbox.value()), 'output_%04d.png'])
+			'-r', str(self.dialog.fpsSpinbox.value()), 'output_%04d.png']
+			
+		# calls FFMPEG and outputs it at 24 frames per second. everything goes in the images folder
+		subprocess.call(ffmpegArgs)
 				
 		
 		# call FFProbe to get the image dimensions of the the file
@@ -304,6 +321,7 @@ class Animationimporter(Extension):
 		self.dialog.frameSkipSpinbox.setRange(1, 20)
 
 		self.dialog.startExportingAtSpinbox.setValue(0.0)
+		self.dialog.startExportingAtSpinbox.setRange(0.0, 9999.0)
 		self.dialog.startExportingAtSpinbox.setSuffix (" s")
 
 		# this will store milliseconds since QSlider has to store int values
@@ -326,7 +344,6 @@ class Animationimporter(Extension):
 		self.dialog.show()
 		self.dialog.activateWindow()
 		self.dialog.exec_()
-
 
 
 # And add the extension to Krita's list of extensions:
