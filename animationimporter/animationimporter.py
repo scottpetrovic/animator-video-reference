@@ -97,7 +97,13 @@ class Animationimporter(Extension):
 		
 		
 		# -vf scale="720:480"
-		subprocess.call(['ffmpeg', '-ss', str(self.currentSeconds) , '-i', self.fileName[0], '-s', '520x320', '-vframes', '1', temp_thumbnail_location])
+		subprocess.call(['ffmpeg', 
+			'-hide_banner',
+			'-loglevel', 'panic',
+			'-ss', str(self.currentSeconds) , 
+			'-i', self.fileName[0], 
+			'-s', '520x320', 
+			'-vframes', '1', temp_thumbnail_location])
 
 		#store it in a QLabel and delete the image reference on the file system
 		self.dialog.thumbnailImageHolder.setPixmap(QPixmap(temp_thumbnail_location))
@@ -142,7 +148,13 @@ class Animationimporter(Extension):
 
 
 		# calls FFMPEG and outputs it at 24 frames per second. everything goes in the images folder
-		subprocess.call(['ffmpeg', '-ss', str(self.dialog.startExportingAtSpinbox.value()) , '-i', self.video_file, '-t',  str(self.dialog.exportDurationSpinbox.value()), "-r", str(self.dialog.fpsSpinbox.value()), 'output_%04d.png'])
+		subprocess.call(['ffmpeg', 
+			'-hide_banner',
+			'-loglevel', 'panic',
+			'-ss', str(self.dialog.startExportingAtSpinbox.value()) , 
+			'-i', self.video_file, 
+			'-t',  str(self.dialog.exportDurationSpinbox.value()), 
+			'-r', str(self.dialog.fpsSpinbox.value()), 'output_%04d.png'])
 				
 		
 		# call FFProbe to get the image dimensions of the the file
