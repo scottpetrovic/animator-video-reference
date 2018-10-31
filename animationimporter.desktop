@@ -4,5 +4,5 @@ ServiceTypes=Krita/PythonPlugin
 X-KDE-Library=animationimporter
 X-Python-2-Compatible=false
 X-Krita-Manual=Manual.html
-Name=Import Video to Animation
-Comment=Import a video file as an image sequence
+Name=Animator Video Reference
+Comment=Reference video for animation and import a video into Krita

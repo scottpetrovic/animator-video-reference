@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (QDialogButtonBox, QDialog, QMessageBox, QComboBox, 
 
 
 EXTENSION_ID = 'pykrita_animationimporter'
-MENU_ENTRY = 'Animation Importer'
+MENU_ENTRY = 'Animator Video Reference'
 
 
 class Animationimporter(Extension):
