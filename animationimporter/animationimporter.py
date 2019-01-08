@@ -6,6 +6,7 @@ import subprocess # for calling terminal tools like FFMPEG and FFProbea
 import shlex
 import json
 import platform
+import math
 
 from PyQt5.QtCore import (Qt, QTimer)
 from krita import (Extension, krita)
@@ -45,6 +46,7 @@ class Animationimporter(Extension):
 		self.textInfo += "Frames: " + str(self.ffprobeData_totalFrameCount) + "<br>"
 		self.textInfo += "Frame Rate: " + str(self.ffprobeData_frameRate)
 		
+		self.dialog.fpsSpinbox.setValue(self.ffprobeData_frameRate)
 		self.dialog.fileLoadedDetails.setText(self.textInfo)
 
 
@@ -231,7 +233,6 @@ class Animationimporter(Extension):
 		
 		# run the ffprobe process, decode stdout into utf-8 & convert to JSON
 		self.ffprobeOutput = subprocess.check_output(self.args).decode('utf-8')
-		self.dialog.fileLocationLabel.setText(str(self.ffprobeOutput)) # temp for testing output format
 
 		self.ffprobeOutput = json.loads(self.ffprobeOutput)
 		self.ffprobeData_height = self.ffprobeOutput['streams'][0]['height']
@@ -241,7 +242,8 @@ class Animationimporter(Extension):
 		# data will come back like "50/3"
 		rawFrameRate = self.ffprobeOutput['streams'][0]['r_frame_rate'] 
 		self.ffprobeData_frameRate = int(rawFrameRate.split("/")[0])  / int(rawFrameRate.split("/")[1])
-		
+		self.ffprobeData_frameRate = math.ceil(self.ffprobeData_frameRate)
+
 
 		if "gif" in pathToInputVideo: # gif stores total frame count elsewhere
 			# maybe first part of frame rate for GIF?
