@@ -25,7 +25,7 @@ class Animationimporter(Extension):
 	# make sure these are defined at the top
 	def signal_change_location(self):
 		
-		self.fileName = QFileDialog.getOpenFileName(self.dialog, "Select your Video File", "", "Videos(*.mp4 *.avi *.mpg);; All files (*.*)" )
+		self.fileName = QFileDialog.getOpenFileName(self.dialog, "Select your Video File", "", "Videos(*.mp4 *.avi *.mpg, *.gif);; All files (*.*)" )
 
 
 		# if the person hits Cancel while picking a file, return and stop trying to load anything
@@ -37,26 +37,20 @@ class Animationimporter(Extension):
 
 		# run FFProbe to get vidoe info    
 		self.findVideoMetada(self.fileName[0])
-		
-		self.totalVideoDuration = float(self.ffprobeOutput['streams'][0]['duration']);
-		self.totalFrameCount = int( self.ffprobeOutput['streams'][0]['nb_frames'] )
 
 		# print(ffprobeOutput['streams'][0]['height'])
-		self.textInfo = "Width:" + str(self.ffprobeOutput['streams'][0]['width']) + "px" + "<br>"
-		self.textInfo += "Height:" + str(self.ffprobeOutput['streams'][0]['height']) + "px" + "<br>"
-		self.textInfo += "Duration: "  +   str( '%.2f'%( self.totalVideoDuration) )     + " s" + "<br>"
-		self.textInfo += "Frames: " + self.ffprobeOutput['streams'][0]['nb_frames'] + "<br>"
-		self.textInfo += "Frame Rate: " + self.ffprobeOutput['streams'][0]['r_frame_rate']
-
-		self.videoFrameRate = int(self.ffprobeOutput['streams'][0]['r_frame_rate'].split("/")[0] )
-
+		self.textInfo = "Width:" + str(self.ffprobeData_width) + "px" + "<br>"
+		self.textInfo += "Height:" + str(self.ffprobeData_height) + "px" + "<br>"
+		self.textInfo += "Duration: "  +   str( '%.2f'%( self.ffprobeData_totalVideoDuration) )     + " s" + "<br>"
+		self.textInfo += "Frames: " + str(self.ffprobeData_totalFrameCount) + "<br>"
+		self.textInfo += "Frame Rate: " + str(self.ffprobeData_frameRate)
+		
 		self.dialog.fileLoadedDetails.setText(self.textInfo)
 
 
-
 		# subtract 1 second for the qslider since the end of the video won't have a image
-		self.dialog.videoPreviewScrubber.setRange(0.0, self.totalFrameCount) 
-		self.dialog.currentFrameNumberInput.setRange(0.0, self.totalFrameCount)
+		self.dialog.videoPreviewScrubber.setRange(0.0, self.ffprobeData_totalFrameCount) 
+		self.dialog.currentFrameNumberInput.setRange(0.0, self.ffprobeData_totalFrameCount)
 		self.dialog.exportDurationSpinbox.setRange(0.0, 9999.0)
 
 		# print(self.fileName[0])
@@ -82,7 +76,7 @@ class Animationimporter(Extension):
 		# update frame and seconds model data if they have changed
 		if self.currentFrame != frameNumber:
 			self.currentFrame = frameNumber
-			self.currentSeconds = float(self.currentFrame) / float(self.videoFrameRate) 
+			self.currentSeconds = float(self.currentFrame) / float(self.ffprobeData_frameRate) 
 
 		# update UI components if they are out of sync
 		if self.currentFrame != self.dialog.currentFrameNumberInput.value():
@@ -162,8 +156,8 @@ class Animationimporter(Extension):
 		# if export duration goes over the total length, change the duration to go to the end
 		final_endTime = self.dialog.startExportingAtSpinbox.value() + self.dialog.exportDurationSpinbox.value()
 
-		if final_endTime > self.totalVideoDuration:
-			adjustedEndTime = self.totalVideoDuration - self.dialog.startExportingAtSpinbox.value() 
+		if final_endTime > self.ffprobeData_totalVideoDuration:
+			adjustedEndTime = self.ffprobeData_totalVideoDuration - self.dialog.startExportingAtSpinbox.value() 
 			self.dialog.exportDurationSpinbox.setValue(adjustedEndTime)
 
 
@@ -181,11 +175,11 @@ class Animationimporter(Extension):
 				
 		
 		# call FFProbe to get the image dimensions of the the file
-		self.imageDimensions = self.findVideoMetada(self.fileName[0])
+		self.findVideoMetada(self.fileName[0])
 		
 		# create Krita document at given dimensions
 		# Application.createDocument(1000, 1000, "Test", "RGBA", "U8", "", 120.0)
-		self.newDocument = app.createDocument(self.imageDimensions[1], self.imageDimensions[0], "Test", "RGBA", "U8", "", 120.0)
+		self.newDocument = app.createDocument(self.ffprobeData_width, self.ffprobeData_height, "Test", "RGBA", "U8", "", 120.0)
 		app.activeWindow().addView(self.newDocument) # shows the document in Krita
 		
 
@@ -237,20 +231,31 @@ class Animationimporter(Extension):
 		
 		# run the ffprobe process, decode stdout into utf-8 & convert to JSON
 		self.ffprobeOutput = subprocess.check_output(self.args).decode('utf-8')
+		self.dialog.fileLocationLabel.setText(str(self.ffprobeOutput)) # temp for testing output format
+
 		self.ffprobeOutput = json.loads(self.ffprobeOutput)
+		self.ffprobeData_height = self.ffprobeOutput['streams'][0]['height']
+		self.ffprobeData_width = self.ffprobeOutput['streams'][0]['width']
 
-		# prints all the metadata available:
-		# import pprint
-		# self.pp = pprint.PrettyPrinter(indent=2)
-		# self.pp.pprint(self.ffprobeOutput)
+		# frame rate comes back in odd format...so we need to do a bit of work so it is more usable. 
+		# data will come back like "50/3"
+		rawFrameRate = self.ffprobeOutput['streams'][0]['r_frame_rate'] 
+		self.ffprobeData_frameRate = int(rawFrameRate.split("/")[0])  / int(rawFrameRate.split("/")[1])
+		
 
+		if "gif" in pathToInputVideo: # gif stores total frame count elsewhere
+			# maybe first part of frame rate for GIF?
+			self.ffprobeData_totalFrameCount = int(rawFrameRate.split("/")[0]) 
+		else:
+			self.ffprobeData_totalFrameCount = int(self.ffprobeOutput['streams'][0]['nb_frames'])
+
+
+		# GIF does not bring back duration/frame data...so need to figure it out
+		if "gif" in pathToInputVideo: 
+			self.ffprobeData_totalVideoDuration = float(self.ffprobeData_totalFrameCount/self.ffprobeData_frameRate)
+		else:
+			self.ffprobeData_totalVideoDuration = float(self.ffprobeOutput['streams'][0]['duration'])
 		
-		# for example, find height and width
-		self.height = self.ffprobeOutput['streams'][0]['height']
-		self.width = self.ffprobeOutput['streams'][0]['width']
-		
-		# print(self.height, self.width)
-		return self.height, self.width
 
 
 	def __init__(self, parent):
@@ -298,7 +303,7 @@ class Animationimporter(Extension):
 
 
 		self.fileName = ""
-		self.videoFrameRate = -1 # not set
+		# self.videoFrameRate = -1 # not set
 		
 
 		#create a Timer that will help compress slider value change events
