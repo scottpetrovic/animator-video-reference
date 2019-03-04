@@ -5,6 +5,8 @@ A Python plugin for Krita 4.2 that allows you to load a video for reference and 
 
 
 # Installation
+You need to have FFMPEG installed for this to work. This is generally needed to do things with animation. I probably could probably add a warning to the plugin if it isn't found. 
+
 Just download the plugin and insert it into your pykrita folder that contains all your other plugins. On linux this will be in your .local > share > krita > pykrita. On Windows this will be in your %APPDATA% folder, then Krita > pykrita. Make sure the readme is in this directory instead of just the folder that contains the contents.
 
 # Usage
