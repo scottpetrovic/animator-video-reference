@@ -45,7 +45,11 @@ class Animationimporter(Extension):
 		self.textInfo += "Duration: "  +   str( '%.2f'%( self.ffprobeData_totalVideoDuration) )     + " s" + "<br>"
 		self.textInfo += "Frames: " + str(self.ffprobeData_totalFrameCount) + "<br>"
 		self.textInfo += "Frame Rate: " + str(self.ffprobeData_frameRate)
-		
+
+		if (self.hasOverriddenFPS):
+			self.textInfo += "*<br>FPS not right in file. Modified to see full duration"
+
+
 		self.dialog.fpsSpinbox.setValue(self.ffprobeData_frameRate)
 		self.dialog.fileLoadedDetails.setText(self.textInfo)
 
@@ -98,12 +102,15 @@ class Animationimporter(Extension):
 		video_directory = os.path.dirname(self.fileName[0]) 
 		temp_thumbnail_location = video_directory + '/temp_thumbnail.png'
 		
+		# grab thumbnail dimensions from UI file
+		thumbnailHolderSize = str(self.dialog.thumbnailImageHolder.width() ) + "x" + str(self.dialog.thumbnailImageHolder.height() )   # '320x240'
+
 		ffmpegArgs = ['ffmpeg', 
 				'-hide_banner',
 				'-loglevel', 'panic',
 				'-ss', str(self.currentSeconds) , 
 				'-i', self.fileName[0], 
-				'-s', '520x320', 
+				'-s', thumbnailHolderSize, 
 				'-vframes', '1', temp_thumbnail_location]
 		
 
@@ -257,6 +264,23 @@ class Animationimporter(Extension):
 			self.ffprobeData_totalVideoDuration = float(self.ffprobeData_totalFrameCount/self.ffprobeData_frameRate)
 		else:
 			self.ffprobeData_totalVideoDuration = float(self.ffprobeOutput['streams'][0]['duration'])
+
+
+		# sometimes frame rate is not set right in video. 
+		# We can try to guess this with the calculatedFrameRateDuration variable 
+		# use alternate method for calculating frame rate in this case so we get the whole length
+		calculatedFrameRateByDuration = float( self.ffprobeData_totalFrameCount/self.ffprobeData_totalVideoDuration)
+		frameRateDifference =  abs(self.ffprobeData_frameRate - calculatedFrameRateByDuration)
+
+		if(frameRateDifference > 1): 
+			# something is not right with the frame rate with this file, so let's use our calculated value
+			# to make  sure we get the whole duration
+			# maybe add a warning to the UI stating something about this
+			self.hasOverriddenFPS = 1
+			self.ffprobeData_frameRate = calculatedFrameRateByDuration
+		else:
+			self.hasOverriddenFPS = 0
+
 		
 
 
