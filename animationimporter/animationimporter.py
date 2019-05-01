@@ -372,9 +372,89 @@ class Animationimporter(Extension):
 		self.dialog.startButton.setEnabled(0)
 		self.dialog.startButton.clicked.connect(self.start_video_processing) # click event
 
+
+
+		# make sure we have everything set up to be able to use this
+		self.checkFFMPegExists()
+		self.checkFFProbeExists()
+		self.checkKritaVersion()		
+		if self.ffmpegFound == 0 or self.ffprobeFound == 0 or self.kritaVersionOk == 0  :
+			self.disableUIAndShowMissingDependencyList()
+
+
 		self.dialog.show()
 		self.dialog.activateWindow()
 		self.dialog.exec_()
+
+
+	def disableUIAndShowMissingDependencyList(self):
+		# we can't use this plugin because we are missing a dependency
+		self.textInfo = "There are some things missing that this plugin needs. You will need to fix these and relaunch the plugin to try again.\n\n"
+		
+		if self.ffmpegFound == 0:
+			self.textInfo +=  "\nffmpeg is not found.\nIf you are on Windows, you will additionally need to add the ffmpeg.exe folder to your system environment variables"
+		
+		if self.ffprobeFound == 0:
+			self.textInfo += "\n\nffprobe is not found.\nThis comes included when you install ffmpeg. If you are on Windows, you will additionally need to add the ffprobe.exe folder to your system environment variables"
+		
+		if self.kritaVersionOk == 0:
+			self.textInfo += "\n\nKrita not new enough.\nYour version of Krita doesn't include the animation API for this to work. You need Krita 4.2 or newer" 
+		
+
+		self.dialog.fileLoadedDetails.setText(self.textInfo)
+		self.dialog.fileLoadedDetails.setMaximumWidth(500)
+
+		# hide other UI elements to prevent clicking
+		self.dialog.filePickerButton.setVisible(0)
+		self.dialog.nextFrameButton.setVisible(0)
+		self.dialog.prevFrameButton.setVisible(0)
+		self.dialog.exportDurationSpinbox.setVisible(0)
+		self.dialog.videoPreviewScrubber.setVisible(0)
+		self.dialog.frameSkipSpinbox.setVisible(0)
+		self.dialog.startButton.setVisible(0)
+		self.dialog.thumbnailImageHolder.setVisible(0)
+		self.dialog.currentFrameNumberInput.setVisible(0)
+		self.dialog.videoPreviewScrubber.setVisible(0)
+		self.dialog.videoSliderValueLabel.setVisible(0)
+		self.dialog.fileLocationLabel.setVisible(0)
+		self.dialog.exportoptionsGroup.setVisible(0)
+
+
+
+	def checkFFMPegExists(self):
+		self.findffmpegCommand = ['ffmpeg', '-v']		
+		self.ffmpegFound = 0
+		try:
+			self.ffmpegFound = subprocess.call(self.findffmpegCommand)
+		except:
+			self.ffmpegFound = 0
+
+
+	def checkFFProbeExists(self):
+		self.findffprobeCommand = ['ffprobe', '-v']		
+		self.ffprobeFound = 0
+		try:
+			self.ffprobeFound = subprocess.call(self.findffprobeCommand)
+		except:
+			self.ffprobeFound = 0
+
+
+	def checkKritaVersion(self):		
+		# major version should be 4 or above	
+		majorVersion = app.version().split(".")[0] 	
+		
+		if (int(majorVersion) < 4 ):
+			self.kritaVersionOk = 0
+			return
+
+		# minor version should be 2 or above
+		minorVersion = app.version().split(".")[1] 
+		if (int(minorVersion) < 2 ):
+			self.kritaVersionOk = 0
+			return
+
+		self.kritaVersionOk = 1
+
 
 
 # And add the extension to Krita's list of extensions:
