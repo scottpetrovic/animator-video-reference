@@ -392,10 +392,10 @@ class Animationimporter(Extension):
 		self.textInfo = "There are some things missing that this plugin needs. You will need to fix these and relaunch the plugin to try again.\n\n"
 		
 		if self.ffmpegFound == 0:
-			self.textInfo +=  "\nffmpeg is not found.\nIf you are on Windows, you will additionally need to add the ffmpeg.exe folder to your system environment variables"
+			self.textInfo +=  "\nffmpeg is not found.\nIf you are on Windows, you will additionally need to add your ffmpeg location to your PATH environment variable. I add this entry to my existing PATH variable... C:\ffmpeg\bin
 		
 		if self.ffprobeFound == 0:
-			self.textInfo += "\n\nffprobe is not found.\nThis comes included when you install ffmpeg. If you are on Windows, you will additionally need to add the ffprobe.exe folder to your system environment variables"
+			self.textInfo += "\n\nffprobe is not found.\nThis comes included when you install ffmpeg. This will probably start working when ffmpeg is found"
 		
 		if self.kritaVersionOk == 0:
 			self.textInfo += "\n\nKrita not new enough.\nYour version of Krita doesn't include the animation API for this to work. You need Krita 4.2 or newer" 
