@@ -5,9 +5,11 @@ A Python plugin for Krita 4.2 that allows you to load a video for reference and 
 
 
 # Installation
-You need to have FFMPEG installed/hooked up for this to work. This is generally needed to do things with animation in Krita and does most of the work for this plugin. I probably could add a warning to the plugin if it FFMPEG isn't found. 
+You need to have FFMPEG installed/hooked up for this to work. This is generally needed to do things with animation in Krita and does most of the work for this plugin. If you haven't done that, see the instructions for the official documentation.
 
-Just download the plugin as a ZIP file. Krita 4.2 comes with a python script importer to make it easy to add. Start Krita and run 
+https://docs.krita.org/en/reference_manual/render_animation.html#setting-up-krita-for-exporting-animations
+
+Once you have that working, then continue. Download the plugin as a ZIP file from the "Clone or Download" option on this page. Krita 4.2 comes with a python script importer to make it easy to add. After the zip file is done, start Krita. Go to...
 
 Tools > Scripts > Import Python Plugin
 
