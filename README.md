@@ -16,4 +16,6 @@ Tools > Scripts > Import Python Plugin
 Select the zip file to upload. You will have to restart Krita for the plugin to show up in your plugin manager. Settings > Configure Krita > Python Plugin Manager. Make sure it is enabled and click OK.
 
 # Usage
-This script is started from the main menu Tools > Animator Video Reference. Once the window loads, select a file. The video loads a thumbnail where you can scrube through the timeline. You can also export out a frame range so it goes into a new Krita document and populate the timeline
+This script is started from the main menu Tools > Animator Video Reference. Once the window loads, select a file. The video loads a thumbnail where you can scrub through the timeline. You can also export out a frame range so it goes into a new Krita document and populate the timeline
+
+You can see an example from this youtube video going over it... https://www.youtube.com/watch?v=VsYGtPXgJIg&t=12s
