@@ -26,7 +26,7 @@ class Animationimporter(Extension):
 	# make sure these are defined at the top
 	def signal_change_location(self):
 		
-		self.fileName = QFileDialog.getOpenFileName(self.dialog, "Select your Video File", "", "Videos(*.mp4 *.avi *.mpg, *.gif);; All files (*.*)" )
+		self.fileName = QFileDialog.getOpenFileName(self.dialog, "Select your Video File", "", "Videos(*.mp4 *.avi *.mpg *.webm *.ogv *.mkv *.mpg, *.gif);; All files (*.*)" )
 
 
 		# if the person hits Cancel while picking a file, return and stop trying to load anything
@@ -234,7 +234,7 @@ class Animationimporter(Extension):
 
 	# function to find the resolution of the input video file
 	def findVideoMetada(self, pathToInputVideo):
-		self.cmd = "ffprobe -v quiet -print_format json -show_streams"
+		self.cmd = "ffprobe -v quiet -print_format json -show_streams -show_entries format"
 		self.args = shlex.split(self.cmd)
 		self.args.append(pathToInputVideo)
 		
@@ -251,19 +251,41 @@ class Animationimporter(Extension):
 		self.ffprobeData_frameRate = int(rawFrameRate.split("/")[0])  / int(rawFrameRate.split("/")[1])
 		self.ffprobeData_frameRate = math.ceil(self.ffprobeData_frameRate)
 
+		# GIF does not bring back duration/frame data so use count_frames
+		if self.ffprobeOutput['streams'][0]['codec_name'] == 'gif': 
+			self.cmd = "ffprobe -v quiet -print_format json -count_frames -show_streams"
+			self.args = shlex.split(self.cmd)
+			self.args.append(pathToInputVideo)
+			self.ffprobeOutput = subprocess.check_output(self.args).decode('utf-8')
 
-		if "gif" in pathToInputVideo: # gif stores total frame count elsewhere
-			# maybe first part of frame rate for GIF?
-			self.ffprobeData_totalFrameCount = int(rawFrameRate.split("/")[0]) 
-		else:
-			self.ffprobeData_totalFrameCount = int(self.ffprobeOutput['streams'][0]['nb_frames'])
-
-
-		# GIF does not bring back duration/frame data...so need to figure it out
-		if "gif" in pathToInputVideo: 
+			self.ffprobeOutput = json.loads(self.ffprobeOutput)
+			self.ffprobeData_totalFrameCount = int(self.ffprobeOutput['streams'][0]['nb_read_frames'])
 			self.ffprobeData_totalVideoDuration = float(self.ffprobeData_totalFrameCount/self.ffprobeData_frameRate)
 		else:
-			self.ffprobeData_totalVideoDuration = float(self.ffprobeOutput['streams'][0]['duration'])
+
+			# Get duration from stream, if it doesn't exist such as on VP8 and VP9, try to get it out of format
+			if self.ffprobeOutput['streams'][0].get('duration') is not None:
+				self.ffprobeData_totalVideoDuration = float(self.ffprobeOutput['streams'][0]['duration'])
+			elif self.ffprobeOutput['format'].get('duration') is not None:
+				self.ffprobeData_totalVideoDuration = float(self.ffprobeOutput['format']['duration'])
+			else: 
+			# If no duration is found with ffprobe, decode with ffmpeg instead for formats such as mpg.
+			# This could be really slow for large files so probably a load screen is needed
+				self.cmdAlt = "ffmpeg -hide_banner -stats -f null - -i"
+				self.argsAlt = shlex.split(self.cmdAlt)
+				self.argsAlt.append(pathToInputVideo)
+				self.ffprobeOutputAlt = subprocess.check_output(self.argsAlt, stderr= subprocess.STDOUT).decode('utf-8')
+
+				self.ffprobeData_altOutputTime = self.ffprobeOutputAlt[ self.ffprobeOutputAlt.find('time=')+5 : self.ffprobeOutputAlt.find('bitrate=')-1 ].split(':')
+				self.ffprobeData_totalVideoDuration = float( (int(self.ffprobeData_altOutputTime[0]) * (60*60)) +  (int(self.ffprobeData_altOutputTime[1]) * (60)) + float(self.ffprobeData_altOutputTime[2]))
+				self.ffprobeData_totalFrameCount = int(self.ffprobeOutputAlt[ self.ffprobeOutputAlt.find('frame=')+6 : self.ffprobeOutputAlt.find('fps=')-1 ].strip())
+
+			# Get nb_frames from stream, if it doesn't exist such as on OGV, try to estimate it out of frame rate
+			if self.ffprobeOutput['streams'][0].get('nb_frames') is not None:
+				self.ffprobeData_totalFrameCount = int(self.ffprobeOutput['streams'][0]['nb_frames'])
+			elif self.ffprobeData_frameRate > 0:
+				self.ffprobeData_totalFrameCount = math.ceil(self.ffprobeData_frameRate * self.ffprobeData_totalVideoDuration) 
+
 
 
 		# sometimes frame rate is not set right in video. 
