@@ -39,7 +39,7 @@ class Animationimporter(Extension):
 		# run FFProbe to get vidoe info    
 		self.findVideoMetada(self.fileName[0])
 
-		# print(ffprobeOutput['streams'][0]['height'])
+		# print(ffprobeOutput['streams'][self.onStream]['height'])
 		self.textInfo = "Width:" + str(self.ffprobeData_width) + "px" + "<br>"
 		self.textInfo += "Height:" + str(self.ffprobeData_height) + "px" + "<br>"
 		self.textInfo += "Duration: "  +   str( '%.2f'%( self.ffprobeData_totalVideoDuration) )     + " s" + "<br>"
@@ -242,17 +242,23 @@ class Animationimporter(Extension):
 		self.ffprobeOutput = subprocess.check_output(self.args).decode('utf-8')
 
 		self.ffprobeOutput = json.loads(self.ffprobeOutput)
-		self.ffprobeData_height = self.ffprobeOutput['streams'][0]['height']
-		self.ffprobeData_width = self.ffprobeOutput['streams'][0]['width']
+
+		for i in range(len(self.ffprobeOutput['streams'])): 
+			if self.ffprobeOutput['streams'][i]['codec_type'] == 'video':
+				self.onStream = i 
+				break
+
+		self.ffprobeData_height = self.ffprobeOutput['streams'][self.onStream]['height']
+		self.ffprobeData_width = self.ffprobeOutput['streams'][self.onStream]['width']
 
 		# frame rate comes back in odd format...so we need to do a bit of work so it is more usable. 
 		# data will come back like "50/3"
-		rawFrameRate = self.ffprobeOutput['streams'][0]['r_frame_rate'] 
+		rawFrameRate = self.ffprobeOutput['streams'][self.onStream]['r_frame_rate'] 
 		self.ffprobeData_frameRate = int(rawFrameRate.split("/")[0])  / int(rawFrameRate.split("/")[1])
 		self.ffprobeData_frameRate = math.ceil(self.ffprobeData_frameRate)
 
 		# GIF does not bring back duration/frame data so use count_frames
-		if self.ffprobeOutput['streams'][0]['codec_name'] == 'gif': 
+		if self.ffprobeOutput['streams'][self.onStream]['codec_name'] == 'gif': 
 			self.cmd = "ffprobe -v quiet -print_format json -count_frames -show_streams"
 			self.args = shlex.split(self.cmd)
 			self.args.append(pathToInputVideo)
@@ -264,8 +270,8 @@ class Animationimporter(Extension):
 		else:
 
 			# Get duration from stream, if it doesn't exist such as on VP8 and VP9, try to get it out of format
-			if self.ffprobeOutput['streams'][0].get('duration') is not None:
-				self.ffprobeData_totalVideoDuration = float(self.ffprobeOutput['streams'][0]['duration'])
+			if self.ffprobeOutput['streams'][self.onStream].get('duration') is not None:
+				self.ffprobeData_totalVideoDuration = float(self.ffprobeOutput['streams'][self.onStream]['duration'])
 			elif self.ffprobeOutput['format'].get('duration') is not None:
 				self.ffprobeData_totalVideoDuration = float(self.ffprobeOutput['format']['duration'])
 			else: 
@@ -281,8 +287,8 @@ class Animationimporter(Extension):
 				self.ffprobeData_totalFrameCount = int(self.ffprobeOutputAlt[ self.ffprobeOutputAlt.find('frame=')+6 : self.ffprobeOutputAlt.find('fps=')-1 ].strip())
 
 			# Get nb_frames from stream, if it doesn't exist such as on OGV, try to estimate it out of frame rate
-			if self.ffprobeOutput['streams'][0].get('nb_frames') is not None:
-				self.ffprobeData_totalFrameCount = int(self.ffprobeOutput['streams'][0]['nb_frames'])
+			if self.ffprobeOutput['streams'][self.onStream].get('nb_frames') is not None:
+				self.ffprobeData_totalFrameCount = int(self.ffprobeOutput['streams'][self.onStream]['nb_frames'])
 			elif self.ffprobeData_frameRate > 0:
 				self.ffprobeData_totalFrameCount = math.ceil(self.ffprobeData_frameRate * self.ffprobeData_totalVideoDuration) 
 
