@@ -1,4 +1,7 @@
 # Animator Video Reference Plugin
+
+UPDATE 03/13/2023: This plugin is now natively part of Krita as of Krita 5.0. I will keep this code here for reference, but you don't need to install this plugin any longer to get this functionality. It is built-into the application now. This code will not be updated or maintained in the future.
+
 A Python plugin for Krita 4.2 that allows you to load a video for reference and import frames to your document.
 
 ![alt text](preview.png)
